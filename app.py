@@ -42,3 +42,18 @@ qr.save(buf, format="PNG")
 st.write("---")
 st.image(buf, caption=f"Scan to pay £{amount:.2f}", width=380)
 st.success(f"✨ Saving 9p+ on this round.")
+
+# --- THE SOVEREIGN SHIELD (Staff Access) ---
+st.sidebar.markdown("---")
+st.sidebar.write("### 🔐 Staff Terminal")
+pin_input = st.sidebar.text_input("Enter Access PIN", type="password")
+
+if pin_input == "1234":
+    st.sidebar.success("Terminal Unlocked 🛡️")
+    # This is where we show the "Hidden" Tap button for the barmaid
+    st.write("---")
+    if st.button("💳 TRIGGER PHYSICAL CARD TAP", use_container_width=True):
+        st.balloons()
+        st.info(f"READY: Customer should tap their card for £{st.session_state.amt:.2f}")
+elif pin_input != "":
+    st.sidebar.error("Access Denied 🚫")
