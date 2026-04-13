@@ -5,52 +5,58 @@ from io import BytesIO
 # --- CONFIG ---
 st.set_page_config(page_title="Sovereign Terminal", page_icon="🛡️", layout="wide")
 
-# --- THE PRIVACY SHIELD CSS ---
+# --- CLEAN & STABLE UI (NO FLASHING) ---
 st.markdown("""
 <style>
-    /* 1. FULL WIDTH + VERTICAL PRIVACY CROP */
-    /* Only shows a horizontal 'slot' to protect card digits */
+    /* 1. FULL-WIDTH CAMERA - NO ANIMATIONS */
     div[data-testid="stCameraInput"] video {
         width: 100% !important;
-        height: 250px !important; 
-        object-fit: cover !important; 
-        border-radius: 15px;
+        border-radius: 12px;
         border: 4px solid #00FF41;
-    }
-    
-    /* 2. MENU BUTTONS STYLING */
-    .stButton>button { 
-        width: 100%; 
-        border-radius: 10px; 
-        height: 4em; 
-        border: 1px solid #00FF41; 
-        font-weight: bold; 
-        background-color: #0e1117;
-        color: #00FF41;
+        height: auto !important;
     }
 
-    /* 3. INPUT FIELD STYLING */
-    input { font-size: 1.2rem !important; }
+    /* 2. THE SOLID PRIVACY MASK (NO BLUR/NO FLASH) */
+    .privacy-shield {
+        position: absolute;
+        top: 35%; 
+        left: 5%;
+        width: 90%;
+        height: 30%;
+        background-color: #000; /* Solid Black */
+        border: 2px solid #444;
+        z-index: 1000;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00FF41;
+        font-weight: bold;
+    }
+
+    /* 3. STABLE BUTTONS */
+    .stButton>button { 
+        width: 100%; border-radius: 8px; height: 3.5em; 
+        font-weight: bold; background-color: #111; color: #00FF41; 
+        border: 1px solid #444; 
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SESSION STATE (Keeps everything in sync) ---
+# --- SYNC DATA ---
 if 'amt' not in st.session_state: st.session_state.amt = 5.00
 if 'item' not in st.session_state: st.session_state.item = "Pint"
 
-# --- SIDEBAR: MERCHANT SETUP ---
-st.sidebar.title("💳 Merchant Setup")
+# --- SIDEBAR ---
+st.sidebar.title("💳 David's Terminal")
 handle = st.sidebar.text_input("Monzo Handle", value="davidhancock62")
 pin_input = st.sidebar.text_input("Staff PIN", type="password")
 
-st.title(f"🛡️ Sovereign Terminal: {st.session_state.item} (£{st.session_state.amt:.2f})")
+st.title(f"🛡️ {st.session_state.item}: £{st.session_state.amt:.2f}")
 
 if pin_input == "1234":
-    # ---------------- DIRECTOR VIEW (DAVID'S CONTROL) ----------------
-    st.sidebar.success("🛡️ DAVID: PRIVACY MODE ACTIVE")
-    
-    # 1. THE FULL MENU (5 Categories)
-    st.write("### ⚡ Fast Menu Select")
+    # ---------------- DAVID'S CONTROL PANEL ----------------
+    st.write("### ⚡ Quick Select")
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1: 
         if st.button("🍺 PINTS"): st.session_state.item = "Pint"; st.session_state.amt = 5.00; st.rerun()
@@ -63,39 +69,36 @@ if pin_input == "1234":
     with m5: 
         if st.button("🍹 COCKTAILS"): st.session_state.item = "Cocktail"; st.session_state.amt = 12.00; st.rerun()
 
-    # 2. PENNY ADJUSTMENT
-    st.write("### 💰 Step 1: Exact Price (£0.01 Variation)")
+    # PRICE OVERRIDE (Step 1)
+    st.write("---")
+    st.write("### 💰 Step 1: Set Price (£0.01 Adjustment)")
     c_amt, c_itm = st.columns([1, 2])
     with c_amt:
         st.session_state.amt = st.number_input("Amount £", value=st.session_state.amt, step=0.01, format="%.2f")
     with c_itm:
-        st.session_state.item = st.text_input("Drink/Item Detail", value=st.session_state.item)
+        st.session_state.item = st.text_input("Drink Detail", value=st.session_state.item)
 
-    st.write("---")
+    # CAMERA (Step 2)
+    st.write(f"### 📸 Step 2: Scan Card (£{st.session_state.amt:.2f})")
     
-    # 3. PRIVACY CAMERA (The 'Slot' View)
-    st.write(f"### 📸 Step 2: Capture Card (£{st.session_state.amt:.2f})")
-    st.info("💡 Privacy Shield: Camera height restricted to hide full card details.")
+    # Solid black bar overlay
+    st.markdown('<div class="privacy-shield">SENSITIVE DATA MASKED</div>', unsafe_allow_html=True)
     
     card_photo = st.camera_input("CAPTURE CARD")
 
     if card_photo:
-        st.success(f"✅ AUDIT LOGGED: £{st.session_state.amt:.2f}")
-        st.link_button(f"💸 EXECUTE TRANSFER", 
-                       f"https://monzo.me/{handle}/{st.session_state.amt}?d={st.session_state.item.replace(' ', '%20')}")
-        if st.button("🔄 RESET FOR NEXT ORDER"): st.rerun()
+        st.success("✅ AUDIT LOGGED")
+        st.link_button(f"💸 EXECUTE £{st.session_state.amt:.2f} TRANSFER", f"https://monzo.me/{handle}/{st.session_state.amt}?d={st.session_state.item.replace(' ', '%20')}")
+        if st.button("🔄 RESET"): st.rerun()
 
 else:
     # ---------------- CUSTOMER VIEW (LOCKED) ----------------
     st.write(f"### 📱 Scan to Pay: £{st.session_state.amt:.2f}")
-    st.write(f"Order: **{st.session_state.item}**")
+    st.write(f"Item: **{st.session_state.item}**")
     
     pay_url = f"https://monzo.me/{handle}/{st.session_state.amt}?d={st.session_state.item.replace(' ', '%20')}"
-    qr = qrcode.make(pay_url)
-    buf = BytesIO()
-    qr.save(buf, format="PNG")
-    
-    st.image(buf.getvalue(), width=450)
-    st.info("Staff: PIN required for card scanning and price variations.")
+    qr = qrcode.make(pay_url); buf = BytesIO(); qr.save(buf, format="PNG")
+    st.image(buf.getvalue(), width=400)
+    st.info("Staff: Enter PIN to use the Privacy Scanner.")
 
-st.caption("v2.7 | David's Sovereign Master Build | HQ: The New Inn")
+st.caption("v3.0 | Rave-Free Edition | HQ: The New Inn")
