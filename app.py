@@ -5,22 +5,21 @@ from io import BytesIO
 # --- CONFIG ---
 st.set_page_config(page_title="Sovereign Terminal", page_icon="🛡️", layout="wide")
 
-# --- THE "ZOOM & CHOP" PRIVACY CSS ---
+# --- THE "HEAVY BLUR" PRIVACY CSS ---
 st.markdown("""
 <style>
-    /* 1. PHYSICAL CROP: This forces the video to only show the BOTTOM half */
+    /* 1. BLUR THE LIVE CAMERA SENSOR */
+    /* This applies a heavy blur to the LIVE feed so digits are unreadable */
     div[data-testid="stCameraInput"] video {
         width: 100% !important;
-        height: 180px !important; /* Extremely short height */
-        object-fit: cover !important;
-        object-position: bottom !important; /* FORCES THE VIEW TO THE BOTTOM OF THE LENS */
-        border-radius: 12px;
+        filter: blur(8px) contrast(1.5) brightness(0.7) !important;
+        border-radius: 15px;
         border: 4px solid #00FF41;
     }
-
-    /* 2. THE BUTTON GRID */
+    
+    /* 2. MENU BUTTON GRID */
     .stButton>button { 
-        width: 100%; border-radius: 8px; height: 3.5em; 
+        width: 100%; border-radius: 10px; height: 3.5em; 
         font-weight: bold; background-color: #111; color: #00FF41; 
         border: 1px solid #444; 
     }
@@ -64,12 +63,13 @@ if pin_input == "1234":
 
     # 3. THE PRIVACY SCANNER
     st.write(f"### 📸 Step 2: Privacy Scan (£{st.session_state.amt:.2f})")
-    st.warning("🛡️ PRIVACY SHIELD: Only the bottom of the card is visible to hide digits.")
+    st.info("🛡️ SENSITIVE DATA BLURRED: Live digits are obscured for privacy.")
     
-    card_photo = st.camera_input("TAKE AUDIT PHOTO")
+    card_photo = st.camera_input("CAPTURE AUDIT PHOTO")
 
     if card_photo:
         st.success("✅ AUDIT CAPTURED")
+        # NOTE: The captured photo will be unblurred for David's audit, but the staff see blur.
         st.link_button(f"💸 EXECUTE £{st.session_state.amt:.2f} TRANSFER", f"https://monzo.me/{handle}/{st.session_state.amt}?d={st.session_state.item.replace(' ', '%20')}")
         if st.button("🔄 RESET"): st.rerun()
 
@@ -80,4 +80,4 @@ else:
     qr = qrcode.make(pay_url); buf = BytesIO(); qr.save(buf, format="PNG")
     st.image(buf.getvalue(), width=400)
 
-st.caption("v3.1 | Bottom-Crop Privacy | David's Build")
+st.caption("v3.2 | Gaussian Privacy Build | David's Terminal")
